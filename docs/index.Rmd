@@ -1,0 +1,129 @@
+---
+title: "Space-use of birds in the Basel Zoo"
+author: "Master by Tabea Jandt"
+date: "12.04.2018"
+output: ioslides_presentation
+df_print: paged
+smaller: TRUE
+---
+
+```{r setup, include=FALSE}
+rm(list=ls(all=TRUE))
+knitr::opts_chunk$set(echo = FALSE, cache = TRUE, fig.asp = 0.5, fig.height=5)
+
+# Libraries
+library(knitr)
+library(tidyverse)
+library(readxl)
+library(arm)
+library(raster)
+
+# Theme for ggplot
+theme_set(theme_classic()) 
+
+# Load data
+dat <- read_xlsx("Data/Daten_Komplett.xlsx")
+spec <- dat %>% 
+  group_by(Datum_Zahl, Uhrzeit_St, Besucher, Sektor, Art) %>% 
+  summarise(Ind = n())
+we <- dat %>% filter(Art == "BV")
+```
+
+
+## Research questions
+- Ar there differences in species numbers and number of white-eyes in the different sectors
+- Is there a change over time (season or daytime)
+- Is there a response to the number of visits
+
+## Data
+- Number of Withe-Eye individuals: `r length(unique(we$Individuum))`
+- Number of species: `r length(unique(spec$Art))`
+- Number of sampling days: `r length(unique(dat$Datum_Zahl))`
+
+## Number of recorded species
+```{r}
+res <- dat %>% 
+  group_by(Datum_Zahl) %>% 
+  summarise(
+    Anz_Arten = n_distinct(Art),
+    Anz_WE = n_distinct(Individuum),
+    Anz_Sektor = n_distinct(Sektor)
+    )
+
+ggplot(res, aes(x = Datum_Zahl, y = Anz_Arten)) +
+  geom_point() + 
+  geom_line() + 
+  ylim(c(0, NA)) +
+  labs(x = "Julian Day", y = "Number of species")
+```
+
+## Number of recorded White-Eyes
+```{r}
+ggplot(res, aes(x = Datum_Zahl, y = Anz_WE)) +
+  geom_point() + 
+  geom_line() + 
+  ylim(c(0, NA)) +
+  labs(x = "Julian Day", y = "Number of recorded White-Eyes")
+```
+
+## Number of sectors with records
+```{r}
+ggplot(res, aes(x = Datum_Zahl, y = Anz_Sektor)) +
+  geom_point() + 
+  geom_line() + 
+  ylim(c(0, NA)) +
+  labs(x = "Julian Day", y = "Number of sectors with records")
+```
+
+## Numer of White-Eyes across sectors
+```{r}
+res <- dat %>% 
+  group_by(Datum_Zahl, Sektor) %>% 
+  summarise(
+    Anz_WE = n_distinct(Individuum)
+    )
+boxplot(Anz_WE ~ Sektor, data = res, ylim = c(0, 15),
+        xlab = "Sector", ylab = "Numbner of recorded White-Eyes")
+```
+
+## Numer of Species across sectors
+```{r}
+res <- spec %>% 
+  group_by(Datum_Zahl, Sektor) %>% 
+  summarise(
+    Anz_Arten = n_distinct(Art)
+    )
+boxplot(Anz_Arten ~ Sektor, data = res, ylim = c(0, 20),
+        xlab = "Sector", ylab = "Numbner of recorded Species")
+```
+
+- Some sectors seem to be prefered over others.
+
+## Numer of White-Eyes across hours
+```{r}
+res <- we %>% 
+  group_by(Datum_Zahl, Uhrzeit_St) %>% 
+  summarise(
+    Anz_WE = n_distinct(Individuum)
+    )
+boxplot(Anz_WE ~ Uhrzeit_St, data = res, ylim = c(0, 15),
+        xlab = "hour of the day", ylab = "Numbner of recorded White-Eyes")
+```
+
+## Numer of species across hours
+```{r}
+res <- spec %>% 
+  group_by(Datum_Zahl, Uhrzeit_St) %>% 
+  summarise(
+    Anz_Species = n_distinct(Art)
+    )
+boxplot(Anz_Species ~ Uhrzeit_St, data = res, ylim = c(10, 25),
+        xlab = "hour of the day", ylab = "Numbner of recorded Species")
+```
+
+## Interaction between species?
+- How can we test that?
+- Based on simulations?
+
+
+
